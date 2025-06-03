@@ -35,3 +35,46 @@ yarn-error.*
 
 # typescript
 *.tsbuildinfo
+
+# Android/Java/Kotlin
+android/.gradle/
+android/build/
+android/app/build/
+android/local.properties
+android/.idea/
+android/gradle/
+android/gradlew
+android/gradlew.bat
+android/app/src/main/assets/index.android.bundle
+android/app/src/main/res/drawable-*
+android/app/src/main/res/raw/
+
+# iOS/Xcode
+ios/build/
+ios/Pods/
+ios/Podfile.lock
+ios/*.xcworkspace/
+ios/*.xcodeproj/xcuserdata/
+ios/*.xcodeproj/project.xcworkspace/
+
+# IDE - IntelliJ/Android Studio
+.idea/
+*.iml
+*.iws
+*.ipr
+
+# IDE - VSCode
+.vscode/
+
+# React Native
+*.bundle
+*.map
+
+# Testing
+coverage/
+.jest/
+
+# Temporary files
+*.tmp
+*.temp
+*.log
