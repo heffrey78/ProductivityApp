@@ -28,7 +28,13 @@
       "favicon": "./assets/favicon.png"
     },
     "plugins": [
-      "expo-sqlite"
+      "expo-sqlite",
+      [
+        "expo-av",
+        {
+          "microphonePermission": "Allow ProductivityApp to access your microphone for voice recordings."
+        }
+      ]
     ]
   }
 }

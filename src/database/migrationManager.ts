@@ -1,5 +1,6 @@
 import * as SQLite from 'expo-sqlite';
 import { Platform } from 'react-native';
+import { dbConnection } from './DatabaseConnection';
 
 export interface Migration {
   version: number;
@@ -9,7 +10,6 @@ export interface Migration {
 }
 
 export class MigrationManager {
-  private db: SQLite.SQLiteDatabase | null = null;
 
   async initialize(): Promise<void> {
     if (Platform.OS === 'web') {
@@ -17,12 +17,10 @@ export class MigrationManager {
       return;
     }
 
-    if (!this.db) {
-      this.db = await SQLite.openDatabaseAsync('productivity.db');
-    }
+    await dbConnection.initialize();
 
     // Create migrations table using new API
-    await this.db.execAsync(
+    await dbConnection.execAsync(
       `CREATE TABLE IF NOT EXISTS migrations (
         version INTEGER PRIMARY KEY,
         name TEXT NOT NULL,
@@ -37,7 +35,7 @@ export class MigrationManager {
     }
 
     try {
-      const result = await this.db!.getFirstAsync<{ version: number | null }>(
+      const result = await dbConnection.getFirstAsync<{ version: number | null }>(
         'SELECT MAX(version) as version FROM migrations'
       );
       return result?.version || 0;
@@ -54,12 +52,13 @@ export class MigrationManager {
 
     console.log(`Applying migration ${migration.version}: ${migration.name}`);
 
-    await migration.up(this.db!);
+    const db = dbConnection.getDatabase();
+    await migration.up(db);
 
     // Record migration
-    await this.db!.runAsync(
+    await dbConnection.runAsync(
       'INSERT INTO migrations (version, name) VALUES (?, ?)',
-      [migration.version, migration.name]
+      migration.version, migration.name
     );
   }
 

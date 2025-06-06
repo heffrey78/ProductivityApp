@@ -49,7 +49,7 @@
 **So that** I can better manage my workload  
 
 **Acceptance Criteria:**
-- [ ] Task categories (Work, Personal, etc.)
+- [x] Task categories (Work, Personal, etc.)
 - [ ] Priority levels (High, Medium, Low)
 - [ ] Filter tasks by category and priority
 - [ ] Visual indicators for priority levels
@@ -74,9 +74,9 @@
 
 **Acceptance Criteria:**
 - [ ] Markdown editor with live preview
-- [ ] Support for headers, lists, links, code blocks
-- [ ] Save notes to local storage
-- [ ] Notes list with title and preview
+- [x] Support for headers, lists, links, code blocks
+- [x] Save notes to local storage
+- [x] Notes list with title and preview
 
 ### Story 3.2: Note Tagging System
 **As a** user  
@@ -95,7 +95,7 @@
 **So that** I can quickly find relevant information  
 
 **Acceptance Criteria:**
-- [ ] Full-text search across notes and tasks
+- [x] Full-text search across notes and tasks
 - [ ] Search filters (tags, date, type)
 - [ ] Search result highlighting
 - [ ] Recent searches and suggestions
@@ -106,7 +106,7 @@
 **So that** I can connect my documentation with actionable items  
 
 **Acceptance Criteria:**
-- [ ] Attach notes to existing tasks
+- [x] Attach notes to existing tasks
 - [ ] Create tasks directly from note content
 - [ ] View linked notes from task details
 - [ ] Note references in task descriptions

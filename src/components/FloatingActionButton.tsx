@@ -1,16 +1,16 @@
 import React from 'react';
 import {
   TouchableOpacity,
-  Text,
   StyleSheet,
   ViewStyle,
   Platform,
 } from 'react-native';
+import { Ionicons } from '@expo/vector-icons';
 import { theme } from '../constants/theme';
 
 interface FloatingActionButtonProps {
   onPress: () => void;
-  icon?: string;
+  icon?: keyof typeof Ionicons.glyphMap;
   size?: 'small' | 'medium' | 'large';
   color?: string;
   position?: 'bottom-right' | 'bottom-left' | 'bottom-center';
@@ -21,7 +21,7 @@ interface FloatingActionButtonProps {
 
 export const FloatingActionButton: React.FC<FloatingActionButtonProps> = ({
   onPress,
-  icon = '+',
+  icon = 'add',
   size = 'medium',
   color = theme.colors.primary,
   position = 'bottom-right',
@@ -46,13 +46,13 @@ export const FloatingActionButton: React.FC<FloatingActionButtonProps> = ({
       case 'bottom-left':
         return { ...base, left: 20 };
       case 'bottom-center':
-        return { ...base, alignSelf: 'center' };
+        return { ...base, alignSelf: 'center' as const };
       default:
         return { ...base, right: 20 };
     }
   };
 
-  const getFontSize = () => {
+  const getIconSize = () => {
     switch (size) {
       case 'small':
         return 20;
@@ -78,22 +78,20 @@ export const FloatingActionButton: React.FC<FloatingActionButtonProps> = ({
       accessibilityRole="button"
       activeOpacity={0.8}
     >
-      <Text style={[styles.icon, { fontSize: getFontSize() }]}>{icon}</Text>
+      <Ionicons 
+        name={icon} 
+        size={getIconSize()} 
+        color={theme.colors.textInverse} 
+      />
     </TouchableOpacity>
   );
 };
 
 const styles = StyleSheet.create({
   button: {
-    borderRadius: 28,
+    borderRadius: theme.borderRadius.round,
     justifyContent: 'center',
     alignItems: 'center',
     ...theme.shadows.large,
-  },
-  icon: {
-    color: '#FFFFFF',
-    fontWeight: '300',
-    textAlign: 'center',
-    includeFontPadding: false,
   },
 });

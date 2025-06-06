@@ -1,3 +1,5 @@
+import { Tag } from './Tag';
+
 export interface Note {
   id: number;
   title: string;
@@ -12,30 +14,20 @@ export interface Note {
   tags?: Tag[];
 }
 
-export interface Tag {
-  id: number;
-  name: string;
-  color: string;
-  created_at: string;
-  usage_count: number;
-}
-
 export interface CreateNoteRequest {
   title: string;
-  content: string;
   markdown_content: string;
   category?: string;
   is_favorite?: boolean;
-  tags?: number[]; // Array of tag IDs
+  tagIds?: number[]; // Array of tag IDs
 }
 
 export interface UpdateNoteRequest {
   title?: string;
-  content?: string;
   markdown_content?: string;
   category?: string;
   is_favorite?: boolean;
-  tags?: number[]; // Array of tag IDs
+  tagIds?: number[]; // Array of tag IDs
 }
 
 export interface NoteSearchResult {

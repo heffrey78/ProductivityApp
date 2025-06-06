@@ -274,6 +274,26 @@ This section provides prescriptive advice for AI agents (like Claude, ChatGPT, o
    - Use proper error handling - the app should gracefully handle database failures
    - In-memory storage is fine for web, but mobile MUST use SQLite
 
+4. **Database Connection Management (CRITICAL)**
+   - ❌ NEVER create multiple database connections - causes race conditions and "failed to save/load" errors
+   - ✅ ALWAYS use centralized DatabaseConnection singleton (`src/database/DatabaseConnection.ts`)
+   - ❌ Don't use `SQLite.openDatabaseAsync()` in multiple service classes
+   - ✅ Import and use `dbConnection` from the centralized manager
+   - Intermittent failures are usually caused by database lock conflicts between services
+
+5. **Transaction Management**
+   - ✅ ALWAYS wrap multi-step operations in transactions (create note + search index + tags)
+   - ✅ Use `dbConnection.runInTransaction()` for complex operations
+   - ❌ Don't run separate database operations without transaction coordination
+   - This prevents data inconsistency and reduces lock conflicts
+
+6. **Connection Lifecycle Management (CRITICAL)**
+   - ✅ App automatically closes database connections when backgrounded to prevent locks
+   - ✅ Connections are re-initialized when app becomes active again
+   - ✅ Database includes health checks and automatic reconnection on failures
+   - ❌ NEVER manually create SQLite connections - use only the centralized manager
+   - The app handles connection cleanup in `App.tsx` using AppState listeners
+
 ### Step-by-Step Android Build Instructions
 
 When building for Android, follow these exact steps:
@@ -312,6 +332,13 @@ adb install -r android/app/build/outputs/apk/debug/app-debug.apk
    - Don't rely on in-memory state for production features
    - Always implement proper persistence from the start
 
+4. **Database Connection Issues**
+   - If you see "failed to save note" or "failed to load note" intermittently:
+     * Check for multiple `SQLite.openDatabaseAsync()` calls across services
+     * Ensure all services use `dbConnection` from `DatabaseConnection.ts`
+     * Verify multi-step operations are wrapped in transactions
+   - Race conditions occur when services access the database simultaneously
+
 ### Recommended Development Workflow
 
 1. **Before Making Database Changes:**
@@ -334,29 +361,43 @@ adb install -r android/app/build/outputs/apk/debug/app-debug.apk
 
 1. **Database Operations:**
    ```typescript
-   // Good
-   const db = await SQLite.openDatabaseAsync('productivity.db');
-   await db.execAsync('CREATE TABLE...');
+   // Good - Use centralized connection
+   import { dbConnection } from '../database/DatabaseConnection';
+   await dbConnection.initialize();
+   await dbConnection.runAsync('INSERT INTO...');
    
-   // Bad
-   const db = SQLite.openDatabase('productivity.db');
-   db.transaction(tx => {...});
+   // Bad - Multiple connections cause lock conflicts
+   const db = await SQLite.openDatabaseAsync('productivity.db');
+   await db.runAsync('INSERT INTO...');
+   
+   // Good - Use transactions for multi-step operations
+   await dbConnection.runInTransaction(async (db) => {
+     await db.runAsync('INSERT INTO notes...');
+     await db.runAsync('INSERT INTO notes_search...');
+     return result;
+   });
    ```
 
 2. **Service Layer:**
    ```typescript
-   // Always initialize before use
-   async initialize(): Promise<void> {
-     if (this.initialized) return;
-     // ... initialization code
+   // Good - Use centralized connection with error handling
+   import { dbConnection } from '../database/DatabaseConnection';
+   
+   async createNote(data: CreateNoteRequest): Promise<Note> {
+     await dbConnection.initialize();
+     
+     return await dbConnection.runInTransaction(async (db) => {
+       // Multi-step operations in single transaction
+       const result = await db.runAsync('INSERT INTO notes...');
+       await db.runAsync('INSERT INTO notes_search...');
+       return noteData;
+     });
    }
    
-   // Always handle errors
-   try {
-     await this.db.runAsync(query, ...params);
-   } catch (error) {
-     console.error('Database error:', error);
-     throw error;
+   // Bad - Multiple database connections
+   private db: SQLite.SQLiteDatabase | null = null;
+   async initialize() {
+     this.db = await SQLite.openDatabaseAsync('productivity.db');
    }
    ```
 
@@ -377,6 +418,8 @@ Before considering a feature complete:
 - [ ] Search/filter functionality works as expected
 - [ ] No console errors or warnings
 - [ ] Works on both Android and iOS (if applicable)
+- [ ] Test rapid operations (save multiple notes quickly) - should not get "failed to save" errors
+- [ ] Verify database operations work consistently across app restarts
 
 ## 🤝 Contributing
 

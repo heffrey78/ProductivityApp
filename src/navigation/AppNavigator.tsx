@@ -3,11 +3,13 @@ import { NavigationContainer } from '@react-navigation/native';
 import { createStackNavigator } from '@react-navigation/stack';
 import { MainNavigator } from './MainNavigator';
 import { NoteEditorScreen } from '../screens/NoteEditorScreen';
+import { TaskDetailScreen } from '../screens/TaskDetailScreen';
 import { theme } from '../constants/theme';
 
 export type RootStackParamList = {
   Main: undefined;
   NoteEditor: { noteId: number | null };
+  TaskDetail: { taskId: number };
 };
 
 const Stack = createStackNavigator<RootStackParamList>();
@@ -42,6 +44,13 @@ export const AppNavigator: React.FC = () => {
           options={({ route }) => ({
             title: route.params?.noteId ? 'Edit Note' : 'New Note',
           })}
+        />
+        <Stack.Screen
+          name="TaskDetail"
+          component={TaskDetailScreen}
+          options={{
+            title: 'Task Details',
+          }}
         />
       </Stack.Navigator>
     </NavigationContainer>

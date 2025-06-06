@@ -7,9 +7,10 @@ interface TaskListProps {
   tasks: Task[];
   onToggleComplete: (id: number) => void;
   onDelete: (id: number) => void;
+  onTaskPress?: (task: Task) => void;
 }
 
-export default function TaskList({ tasks, onToggleComplete, onDelete }: TaskListProps) {
+export default function TaskList({ tasks, onToggleComplete, onDelete, onTaskPress }: TaskListProps) {
   if (tasks.length === 0) {
     return (
       <View style={styles.emptyContainer}>
@@ -28,6 +29,7 @@ export default function TaskList({ tasks, onToggleComplete, onDelete }: TaskList
           task={item}
           onToggleComplete={onToggleComplete}
           onDelete={onDelete}
+          onPress={onTaskPress}
         />
       )}
       style={styles.list}

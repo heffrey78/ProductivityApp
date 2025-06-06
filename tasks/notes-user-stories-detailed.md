@@ -10,17 +10,17 @@
 **So that** I can document my thoughts with rich text formatting  
 
 **Detailed Acceptance Criteria:**
-- [ ] **Note Creation**: 
+- [x] **Note Creation**: 
   - Tap FAB to create new note
   - Default title: "Untitled Note" with date
   - Empty markdown editor opens
   - Auto-focus on title field
-- [ ] **Markdown Editor**:
+- [x] **Markdown Editor**:
   - TextInput supports markdown syntax
   - Real-time character count display
   - Support for basic markdown: `# ## ### **bold** *italic* [link](url) - list`
   - Keyboard shortcuts for common formatting (if available)
-- [ ] **Preview Mode**:
+- [x] **Preview Mode**:
   - Toggle button between Edit/Preview modes
   - Rendered markdown display using react-native-markdown-display
   - Smooth transition between modes
@@ -30,7 +30,7 @@
   - "Unsaved changes" warning when navigating away
 - [ ] **Platform Behavior**:
   - iOS: Smooth keyboard handling with proper insets
-  - Android: Hardware back button support with save prompt
+  - Android: Hardware back button support with save prompt **Android tested**
   - Web: Keyboard shortcuts (Ctrl+S to save, Ctrl+P for preview)
 
 **Technical Requirements:**
@@ -51,28 +51,28 @@
 **So that** I can easily find and access my documentation  
 
 **Detailed Acceptance Criteria:**
-- [ ] **Notes List Screen**:
+- [x] **Notes List Screen**:
   - Accessible via bottom tab navigation
   - Virtualized list for performance (FlatList)
   - Pull-to-refresh functionality
   - Empty state with helpful message and create button
-- [ ] **Note Display Cards**:
+- [x] **Note Display Cards**:
   - Note title (truncated if long)
   - First 2 lines of content preview
   - Last modified date/time
   - Word count indicator
   - Favorite star icon (if favorited)
-- [ ] **Sorting Options**:
+- [x] **Sorting Options**:
   - Default: Recently modified first
   - Options: Created date, Title (A-Z), Word count
   - Sort order toggle (ascending/descending)
   - Remember user's preferred sort setting
-- [ ] **Basic Actions**:
+- [x] **Basic Actions**:
   - Tap to open note for editing
   - Long press for context menu (Edit, Delete, Favorite, Share)
   - Swipe actions: Delete (left), Favorite (right)
   - Confirmation dialog for destructive actions
-- [ ] **Search Integration**:
+- [x] **Search Integration**:
   - Search bar at top of notes list
   - Real-time filtering as user types
   - Clear search button when active
@@ -92,7 +92,7 @@
 **So that** I can categorize and organize related content  
 
 **Detailed Acceptance Criteria:**
-- [ ] **Tag Input Interface**:
+- [x] **Tag Input Interface**:
   - Tag input field in note editor
   - Chip-style display of selected tags
   - Maximum 10 tags per note
@@ -130,7 +130,7 @@
   - Modal with scrollable list of available tags
   - Select multiple tags for AND/OR filtering
   - Clear all filters option
-- [ ] **Filter Display**:
+- [x] **Filter Display**:
   - Active filters shown as chips below search bar
   - Note count for each active filter
   - Remove individual filters with tap
@@ -153,18 +153,18 @@
 **So that** I can quickly find information even when I don't remember which note contains it  
 
 **Detailed Acceptance Criteria:**
-- [ ] **Search Interface**:
+- [x] **Search Interface**:
   - Dedicated search tab in main navigation
   - Large search input with clear button
   - Search suggestions appear as user types
   - Recent searches shown when input is empty
-- [ ] **Search Functionality**:
+- [x] **Search Functionality**:
   - Search note titles and content
   - Minimum 2 characters to trigger search
   - Search results update in real-time with 300ms debounce
   - Support for quoted phrases: "exact phrase"
   - Exclude terms with minus: -unwanted
-- [ ] **Search Results Display**:
+- [x] **Search Results Display**:
   - Grouped by content type (Notes, Tasks if integrated)
   - Note results show title + highlighted snippet
   - Snippet shows context around matched terms
@@ -216,22 +216,22 @@
 **So that** I can keep all related information together  
 
 **Detailed Acceptance Criteria:**
-- [ ] **Task Detail Enhancement**:
+- [x] **Task Detail Enhancement**:
   - "Linked Notes" section in task detail view
   - Show note titles and brief previews
   - Tap note to open in editor
   - Link/unlink notes with dedicated buttons
-- [ ] **Note Linking Interface**:
+- [x] **Note Linking Interface**:
   - "Link to Task" button in note editor
   - Modal with searchable task list
   - Multi-select for linking to multiple tasks
   - Visual indicator in note when linked to tasks
-- [ ] **Bidirectional Navigation**:
+- [x] **Bidirectional Navigation**:
   - From task: see all linked notes
   - From note: see all linked tasks
   - Quick navigation between linked content
   - Breadcrumb navigation for context
-- [ ] **Link Management**:
+- [x] **Link Management**:
   - Unlink notes from tasks without deleting
   - Bulk link operations (link multiple notes to one task)
   - Warning when deleting linked content
@@ -249,7 +249,7 @@
 **So that** I can seamlessly move from documentation to action  
 
 **Detailed Acceptance Criteria:**
-- [ ] **Task Creation Interface**:
+- [x] **Task Creation Interface**:
   - "Create Task" button in note editor
   - Smart content extraction for task title
   - Option to select specific text for task description

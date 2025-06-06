@@ -1,8 +1,8 @@
-import * as SQLite from 'expo-sqlite';
 import { Platform } from 'react-native';
 import { webStorageManager } from './webStorage';
 import { migrationManager } from './migrationManager';
 import { migrations } from './migrations';
+import { dbConnection } from './DatabaseConnection';
 
 export interface Task {
   id?: number;
@@ -14,7 +14,6 @@ export interface Task {
 }
 
 class DatabaseManager {
-  private db: SQLite.SQLiteDatabase | null = null;
   private initialized = false;
 
   async initializeDatabase(): Promise<void> {
@@ -27,7 +26,7 @@ class DatabaseManager {
     }
 
     try {
-      this.db = await SQLite.openDatabaseAsync('productivity.db');
+      await dbConnection.initialize();
       
       // Run migrations
       await migrationManager.runMigrations(migrations);
@@ -45,9 +44,9 @@ class DatabaseManager {
       return webStorageManager.getAllTasks();
     }
 
-    if (!this.db) throw new Error('Database not initialized');
+    await this.initializeDatabase();
 
-    const result = await this.db.getAllAsync<{
+    const result = await dbConnection.getAllAsync<{
       id: number;
       title: string;
       description: string | null;
@@ -71,10 +70,10 @@ class DatabaseManager {
       return webStorageManager.createTask(title, description);
     }
 
-    if (!this.db) throw new Error('Database not initialized');
+    await this.initializeDatabase();
 
     const now = new Date().toISOString();
-    const result = await this.db.runAsync(
+    const result = await dbConnection.runAsync(
       'INSERT INTO tasks (title, description, completed, created_at, updated_at) VALUES (?, ?, 0, ?, ?)',
       title, description || null, now, now
     );
@@ -94,7 +93,7 @@ class DatabaseManager {
       return webStorageManager.updateTask(id, updates);
     }
 
-    if (!this.db) throw new Error('Database not initialized');
+    await this.initializeDatabase();
 
     const now = new Date().toISOString();
     const setClauses: string[] = [];
@@ -119,7 +118,7 @@ class DatabaseManager {
     if (setClauses.length > 1) { // More than just updated_at
       const query = `UPDATE tasks SET ${setClauses.join(', ')} WHERE id = ?`;
       values.push(id);
-      await this.db.runAsync(query, ...values);
+      await dbConnection.runAsync(query, ...values);
     }
   }
 
@@ -128,8 +127,8 @@ class DatabaseManager {
       return webStorageManager.deleteTask(id);
     }
 
-    if (!this.db) throw new Error('Database not initialized');
-    await this.db.runAsync('DELETE FROM tasks WHERE id = ?', id);
+    await this.initializeDatabase();
+    await dbConnection.runAsync('DELETE FROM tasks WHERE id = ?', id);
   }
 
   async toggleTaskComplete(id: number): Promise<void> {
@@ -137,9 +136,9 @@ class DatabaseManager {
       return webStorageManager.toggleTaskComplete(id);
     }
 
-    if (!this.db) throw new Error('Database not initialized');
+    await this.initializeDatabase();
     
-    const task = await this.db.getFirstAsync<{completed: number}>(
+    const task = await dbConnection.getFirstAsync<{completed: number}>(
       'SELECT completed FROM tasks WHERE id = ?', id
     );
     

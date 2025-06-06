@@ -4,12 +4,19 @@ import {
   View,
   SafeAreaView,
 } from 'react-native';
+import { StackNavigationProp } from '@react-navigation/stack';
 import TaskList from '../components/TaskList';
 import AddTaskForm from '../components/AddTaskForm';
 import { databaseManager, Task } from '../database/database';
 import { theme } from '../constants/theme';
 
-export const TasksScreen: React.FC = () => {
+type TasksScreenNavigationProp = StackNavigationProp<any, 'Tasks'>;
+
+interface TasksScreenProps {
+  navigation?: TasksScreenNavigationProp;
+}
+
+export const TasksScreen: React.FC<TasksScreenProps> = ({ navigation }) => {
   const [tasks, setTasks] = useState<Task[]>([]);
 
   useEffect(() => {
@@ -34,7 +41,7 @@ export const TasksScreen: React.FC = () => {
     }
   };
 
-  const handleAddTask = async (title: string, description: string) => {
+  const handleAddTask = async (title: string, description?: string) => {
     try {
       await databaseManager.createTask(title, description);
       await loadTasks();
@@ -61,6 +68,12 @@ export const TasksScreen: React.FC = () => {
     }
   };
 
+  const handleTaskPress = (task: Task) => {
+    if (navigation && task.id) {
+      navigation.navigate('TaskDetail', { taskId: task.id });
+    }
+  };
+
   return (
     <SafeAreaView style={styles.container}>
       <View style={styles.content}>
@@ -68,6 +81,7 @@ export const TasksScreen: React.FC = () => {
           tasks={tasks}
           onToggleComplete={handleToggleTask}
           onDelete={handleDeleteTask}
+          onTaskPress={handleTaskPress}
         />
         <AddTaskForm onAddTask={handleAddTask} />
       </View>
