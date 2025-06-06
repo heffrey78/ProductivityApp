@@ -78,3 +78,12 @@ coverage/
 *.tmp
 *.temp
 *.log
+
+# Build scripts and debug files
+build-android-debug.sh
+DEBUG_PERMISSIONS.md
+
+# Database files
+*.db
+*.sqlite
+*.sqlite3
