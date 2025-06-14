@@ -5,6 +5,7 @@ import {
   SafeAreaView,
 } from 'react-native';
 import { StackNavigationProp } from '@react-navigation/stack';
+import { useFocusEffect } from '@react-navigation/native';
 import TaskList from '../components/TaskList';
 import AddTaskForm from '../components/AddTaskForm';
 import { databaseManager, Task } from '../database/database';
@@ -22,6 +23,13 @@ export const TasksScreen: React.FC<TasksScreenProps> = ({ navigation }) => {
   useEffect(() => {
     initializeAndLoadTasks();
   }, []);
+
+  // Refresh tasks when screen comes into focus
+  useFocusEffect(
+    React.useCallback(() => {
+      loadTasks();
+    }, [])
+  );
 
   const initializeAndLoadTasks = async () => {
     try {

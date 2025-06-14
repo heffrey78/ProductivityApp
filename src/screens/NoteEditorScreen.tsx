@@ -28,6 +28,9 @@ import { VoiceRecorder } from '../components/VoiceRecorder';
 import { RecordingPlayer } from '../components/RecordingPlayer';
 import { Recording } from '../types/Recording';
 import { recordingManager } from '../services/RecordingManager';
+import { settingsService } from '../services/SettingsService';
+import { transcriptionService } from '../services/TranscriptionService';
+import { SpeechToTextModal } from '../components/SpeechToTextModal';
 
 type Props = StackScreenProps<RootStackParamList, 'NoteEditor'>;
 
@@ -55,6 +58,7 @@ export const NoteEditorScreen: React.FC<Props> = ({ route, navigation }) => {
   const [showTaskActions, setShowTaskActions] = useState(false);
   const [showVoiceRecorder, setShowVoiceRecorder] = useState(false);
   const [attachedRecordings, setAttachedRecordings] = useState<Recording[]>([]);
+  const [showSpeechToText, setShowSpeechToText] = useState(false);
 
   useEffect(() => {
     navigation.setOptions({
@@ -67,6 +71,12 @@ export const NoteEditorScreen: React.FC<Props> = ({ route, navigation }) => {
             <Text style={styles.headerButtonText}>
               {isFavorite ? '⭐' : '☆'}
             </Text>
+          </TouchableOpacity>
+          <TouchableOpacity
+            style={styles.headerButton}
+            onPress={() => setShowSpeechToText(true)}
+          >
+            <Text style={styles.headerButtonText}>🎤</Text>
           </TouchableOpacity>
           <TouchableOpacity
             style={styles.headerButton}
@@ -85,7 +95,7 @@ export const NoteEditorScreen: React.FC<Props> = ({ route, navigation }) => {
         </View>
       ),
     });
-  }, [showPreview, isFavorite, title, content, selectedTags, category]);
+  }, [showPreview, isFavorite, title, content, selectedTags, category, showSpeechToText]);
 
   useEffect(() => {
     console.log('NoteEditor: noteId changed to:', noteId);
@@ -254,7 +264,29 @@ export const NoteEditorScreen: React.FC<Props> = ({ route, navigation }) => {
       if (noteId) {
         await recordingManager.linkRecordingToNote(recording.id, noteId);
         console.log('Voice recording completed and linked to note:', recording.title);
-        Alert.alert('Success', 'Voice recording saved successfully');
+        
+        // Check if auto-transcription is enabled
+        const autoTranscribe = await settingsService.getSetting('autoTranscribeRecordings');
+        if (autoTranscribe && transcriptionService.isSupported()) {
+          try {
+            console.log('Auto-transcribing recording:', recording.title);
+            const transcriptionResult = await transcriptionService.transcribeFile(recording.file_path);
+            
+            // Update the recording with transcription
+            await recordingManager.updateRecording(recording.id, {
+              transcription: transcriptionResult.text
+            });
+            
+            console.log('Auto-transcription completed for recording:', recording.title);
+            Alert.alert('Success', 'Voice recording saved and transcribed successfully');
+          } catch (transcriptionError) {
+            console.error('Auto-transcription failed:', transcriptionError);
+            Alert.alert('Success', 'Voice recording saved successfully. Transcription can be done manually.');
+          }
+        } else {
+          Alert.alert('Success', 'Voice recording saved successfully');
+        }
+        
         await loadAttachedRecordings();
       }
     } catch (error) {
@@ -284,6 +316,31 @@ export const NoteEditorScreen: React.FC<Props> = ({ route, navigation }) => {
       console.error('Failed to update recording:', error);
       Alert.alert('Error', 'Failed to update recording');
     }
+  };
+
+  const handleRecordingTranscriptionUpdate = async (recordingId: number, transcription: string) => {
+    try {
+      await recordingManager.updateRecording(recordingId, {
+        transcription: transcription,
+      });
+      await loadAttachedRecordings();
+      console.log('Transcription updated successfully for recording:', recordingId);
+    } catch (error) {
+      console.error('Failed to update transcription:', error);
+      Alert.alert('Error', 'Failed to save transcription');
+      throw error; // Re-throw to allow RecordingPlayer to handle the error
+    }
+  };
+
+  const handleSpeechToTextResult = (text: string) => {
+    // Insert the recognized text at the current cursor position or append to content
+    setContent(prevContent => {
+      if (prevContent.trim().length === 0) {
+        return text;
+      } else {
+        return prevContent + '\n\n' + text;
+      }
+    });
   };
 
   const getCategoryEmoji = (value: string) => {
@@ -527,16 +584,23 @@ export const NoteEditorScreen: React.FC<Props> = ({ route, navigation }) => {
 
             {noteId ? (
               attachedRecordings.length > 0 ? (
-                <View style={styles.recordingsList}>
-                  {attachedRecordings.map((recording) => (
-                    <RecordingPlayer
-                      key={recording.id}
-                      recording={recording}
-                      onDelete={() => handleRecordingDelete(recording)}
-                      onFavoriteToggle={() => handleRecordingFavoriteToggle(recording)}
-                    />
-                  ))}
-                </View>
+                <ScrollView 
+                  style={styles.recordingsScrollView}
+                  showsVerticalScrollIndicator={true}
+                  nestedScrollEnabled={true}
+                >
+                  <View style={styles.recordingsList}>
+                    {attachedRecordings.map((recording) => (
+                      <RecordingPlayer
+                        key={recording.id}
+                        recording={recording}
+                        onDelete={() => handleRecordingDelete(recording)}
+                        onFavoriteToggle={() => handleRecordingFavoriteToggle(recording)}
+                        onTranscriptionUpdate={handleRecordingTranscriptionUpdate}
+                      />
+                    ))}
+                  </View>
+                </ScrollView>
               ) : (
                 <View style={styles.emptyRecordingsContainer}>
                   <Text style={styles.emptyRecordingsText}>No voice recordings</Text>
@@ -575,6 +639,14 @@ export const NoteEditorScreen: React.FC<Props> = ({ route, navigation }) => {
         onClose={() => setShowVoiceRecorder(false)}
         onRecordingComplete={handleVoiceRecordingComplete}
         initialTitle={`Recording for ${title || 'Note'}`}
+      />
+
+      <SpeechToTextModal
+        visible={showSpeechToText}
+        onClose={() => setShowSpeechToText(false)}
+        onTextCaptured={handleSpeechToTextResult}
+        title="Speech to Text"
+        placeholder="Tap the microphone and speak to add text to your note"
       />
     </KeyboardAvoidingView>
   );
@@ -830,6 +902,7 @@ const styles = StyleSheet.create({
     marginTop: theme.spacing.lg,
     paddingHorizontal: theme.spacing.md,
     paddingBottom: theme.spacing.xl,
+    flex: 1,
   },
   recordingActionButton: {
     paddingHorizontal: theme.spacing.sm,
@@ -842,8 +915,13 @@ const styles = StyleSheet.create({
     color: theme.colors.surface,
     fontWeight: theme.fontWeight.medium,
   },
+  recordingsScrollView: {
+    maxHeight: 300,
+    flexShrink: 1,
+  },
   recordingsList: {
     gap: theme.spacing.md,
+    paddingBottom: theme.spacing.md,
   },
   emptyRecordingsContainer: {
     alignItems: 'center',

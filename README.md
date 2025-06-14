@@ -6,6 +6,8 @@ A mobile-first personal productivity application built with React Native and Exp
 
 - **Task Management**: Create, update, and track tasks with persistent storage
 - **Markdown Notes**: Write and preview notes with full markdown support
+- **Voice Recordings**: Record audio memos and attach them to notes
+- **Offline Transcription**: Convert speech to text using local Whisper models (100% offline)
 - **Search**: Find notes and tasks quickly with real-time search
 - **Cross-Platform**: Works on iOS, Android, and Web
 - **Offline First**: All data stored locally using SQLite
@@ -85,22 +87,8 @@ npm run web
 
 Opens the app in your default web browser at http://localhost:19006
 
-### Using Expo Go App
 
-1. Install the Expo Go app on your physical device:
-   - [iOS App Store](https://apps.apple.com/app/expo-go/id982107779)
-   - [Google Play Store](https://play.google.com/store/apps/details?id=host.exp.exponent)
-
-2. Start the development server:
-   ```bash
-   npm start
-   ```
-
-3. Scan the QR code with:
-   - iOS: Camera app
-   - Android: Expo Go app
-
-## 🔨 Building for Production
+## 🔨 Building
 
 ### Android APK/AAB
 
@@ -197,9 +185,40 @@ ProductivityApp/
 The app uses SQLite for local data storage with a migration system:
 
 - **Tasks**: Title, description, completion status
-- **Notes**: Markdown content, search indexing, categories
-- **Tags**: For organizing notes (coming soon)
+- **Notes**: Markdown content, search indexing, categories, tags
+- **Recordings**: Audio files with metadata and transcriptions
+- **Tags**: For organizing notes and content
 - **Cross-platform**: Falls back to localStorage on web
+
+## 🎙️ Voice Recording & Transcription
+
+The app includes advanced voice recording capabilities with offline transcription:
+
+### Features
+- **High-quality audio recording** using Expo AV
+- **Offline speech-to-text** using local Whisper models (no internet required)
+- **Automatic transcription** (optional setting)
+- **Manual transcription** for existing recordings
+- **Recording management** (play, pause, delete, favorite)
+- **Note attachment** - recordings can be linked to specific notes
+
+### Privacy & Security
+- **100% offline processing** - audio never leaves your device
+- **Local model storage** - Whisper models downloaded once and cached
+- **No cloud services** - complete privacy for sensitive recordings
+
+### Usage
+1. Open any note in the editor
+2. Tap the recording button to start voice memo
+3. Save the recording to automatically link it to your note
+4. Enable auto-transcription in settings for automatic speech-to-text
+5. Or manually transcribe by expanding the transcription section
+
+### Technical Details
+- Uses OpenAI's Whisper model for high-accuracy transcription
+- Model size: ~38MB (Tiny English model)
+- Supports chunking for long recordings
+- Background processing with progress indicators
 
 ## 🧪 Development Tips
 
@@ -228,17 +247,63 @@ npx expo start --clear
 ### Common Issues
 
 #### "Unable to locate a Java Runtime"
-Install Java 17:
+**macOS:**
 ```bash
 brew install openjdk@17
 ```
 
+**Linux:**
+```bash
+# Install via SDKMAN (recommended)
+curl -s "https://get.sdkman.io" | bash
+source ~/.sdkman/bin/sdkman-init.sh
+sdk install java 17.0.11-tem
+```
+
 #### "Android SDK not found"
 Set environment variables in `~/.zshrc` or `~/.bashrc`:
+
+**macOS:**
 ```bash
 export ANDROID_HOME=$HOME/Library/Android/sdk
 export PATH=$PATH:$ANDROID_HOME/platform-tools
 ```
+
+**Linux:**
+```bash
+export ANDROID_HOME=/home/$USER/Android/Sdk
+export PATH=$PATH:$ANDROID_HOME/platform-tools:$ANDROID_HOME/emulator
+```
+
+#### "Cannot run program cmake" or "ninja: command not found"
+**Linux Only:** Install required build tools:
+```bash
+sudo apt-get update
+sudo apt-get install -y ninja-build cmake
+```
+
+If you have pyenv, ensure system binaries are prioritized:
+```bash
+export PATH=/usr/bin:$PATH
+```
+
+#### "[CXX1101] NDK did not have a source.properties file"
+This error occurs when the NDK installation is incomplete. Solutions:
+
+1. **Let Gradle auto-install NDK (recommended):**
+   ```bash
+   # Remove incomplete NDK
+   rm -rf $ANDROID_HOME/ndk/27.1.12297006
+   # Gradle will download the correct version automatically
+   ```
+
+2. **Or install via Android Studio:**
+   - Open Android Studio
+   - Go to SDK Manager
+   - Install NDK (Side by side) version 27.0.12077973 or newer
+
+#### "Hard link failed" warnings during build
+These warnings are normal and don't affect the build. They occur when building across different filesystems.
 
 #### Build failures
 1. Clear all caches:
@@ -253,9 +318,46 @@ export PATH=$PATH:$ANDROID_HOME/platform-tools
    cd ios && xcodebuild clean && cd ..
    ```
 
+3. **Linux specific:** If build fails with PATH issues:
+   ```bash
+   export PATH=/usr/bin:$PATH
+   source ~/.sdkman/bin/sdkman-init.sh
+   export ANDROID_HOME=/home/$USER/Android/Sdk
+   export PATH=$ANDROID_HOME/platform-tools:$PATH
+   cd android && ./gradlew assembleDebug
+   ```
+
 ## 🤖 Agent-Friendly Development Guide
 
 This section provides prescriptive advice for AI agents (like Claude, ChatGPT, or Cursor) working on this codebase, based on lessons learned from development sessions.
+
+### Current System State (June 2024) ✅
+- **OS**: Pop!_OS 22.04 LTS (Ubuntu-based)
+- **Node.js**: v18.20.5 
+- **Java**: Temurin-17.0.11+9 via SDKMAN ✅
+- **Android SDK**: Installed at `/home/$USER/Android/Sdk` ✅
+- **Available AVD**: `Medium_Phone_API_35` ✅
+- **Whisper.rn**: v0.4.0-rc.12 (amx.cpp files fixed) ✅
+- **Status**: ✅ Voice recording and Whisper transcription features DEPLOYED SUCCESSFULLY
+- **APK**: 190MB debug build working on emulator ✅
+
+### Recently Resolved Issues (June 2024)
+
+1. **Whisper.rn Build Failure**: Fixed by upgrading from v0.4.0-rc.11 to v0.4.0-rc.12
+   - Issue: Missing `cpp/amx/amx.cpp` files causing CMake errors
+   - Solution: Use latest RC version which includes required files
+
+2. **expo-speech-recognition Plugin Error**: Fixed by complete removal
+   - Issue: Plugin reference remained in app.json after npm uninstall
+   - Solution: Remove from both package.json AND app.json plugins array
+
+3. **Java Version Mismatch**: Environment setup was incomplete
+   - Issue: Gradle couldn't find Java 17 despite SDKMAN installation
+   - Solution: Must run `source ~/.sdkman/bin/sdkman-init.sh` before build
+
+4. **pyenv cmake Conflict**: System path priority issue
+   - Issue: Gradle used pyenv cmake instead of system cmake
+   - Solution: Set `export PATH=/usr/bin:$PATH` before Android SDK paths
 
 ### Critical Lessons Learned
 
@@ -296,8 +398,140 @@ This section provides prescriptive advice for AI agents (like Claude, ChatGPT, o
 
 ### Step-by-Step Android Build Instructions
 
-When building for Android, follow these exact steps:
+#### Prerequisites for APK Building
 
+**System Requirements:**
+- Ubuntu/Pop!_OS 22.04 or similar Debian-based Linux
+- At least 8GB RAM (16GB recommended for building)
+- 20GB+ free disk space for Android SDK/NDK
+
+**Step 1: Install Required System Packages**
+```bash
+sudo apt-get update
+sudo apt-get install -y ninja-build cmake
+```
+
+**Step 2: Install Java 17 via SDKMAN**
+```bash
+# Install SDKMAN (if not already installed)
+curl -s "https://get.sdkman.io" | bash
+source ~/.sdkman/bin/sdkman-init.sh
+
+# Install Java 17
+sdk install java 17.0.11-tem
+```
+
+**Step 3: Set Up Android SDK**
+1. Download Android Studio from https://developer.android.com/studio
+2. Install and run Android Studio
+3. Go to Settings > Appearance & Behavior > System Settings > Android SDK
+4. Install:
+   - Android SDK Platform 35 (API Level 35)
+   - Android SDK Build-Tools 35.0.0
+   - Android Emulator
+   - Intel x86 Emulator Accelerator (HAXM installer) - if using Intel CPU
+
+**Step 4: Create Android Virtual Device (AVD)**
+1. Open AVD Manager in Android Studio
+2. Create a new virtual device:
+   - Device: Medium Phone or similar
+   - System Image: API 35 (Google Play)
+   - Name: `Medium_Phone_API_35`
+
+**Step 5: Set Environment Variables**
+Add to your `~/.bashrc` or `~/.zshrc`:
+```bash
+export ANDROID_HOME=/home/$USER/Android/Sdk
+export PATH=$PATH:$ANDROID_HOME/platform-tools:$ANDROID_HOME/emulator
+```
+
+**Step 6: Fix pyenv PATH Issues (if using pyenv)**
+If you have pyenv installed, ensure system binaries are prioritized:
+```bash
+# Add to ~/.bashrc or run before building
+export PATH=/usr/bin:$PATH
+```
+
+**Step 7: Install Node.js Dependencies**
+```bash
+npm install
+```
+
+**Note:** NDK will be automatically downloaded and installed during the first build.
+
+#### Verified Working Build Process (Pop!_OS 22.04) ✅
+
+**Prerequisites Confirmed:**
+- ✅ Java 17 via SDKMAN (Temurin-17.0.11+9) 
+- ✅ Android SDK installed at `/home/$USER/Android/Sdk`
+- ✅ Android emulator `Medium_Phone_API_35` available
+- ✅ Whisper.rn v0.4.0-rc.12 (fixed missing amx.cpp files)
+
+**Successful Build Commands:**
+
+```bash
+# 1. Set up environment (CRITICAL - include SDKMAN and PATH priority)
+source ~/.sdkman/bin/sdkman-init.sh
+export PATH=/usr/bin:$PATH  # Prioritize system cmake over pyenv
+export ANDROID_HOME=/home/$USER/Android/Sdk
+export PATH=$ANDROID_HOME/platform-tools:$ANDROID_HOME/emulator:$PATH
+
+# 2. Start Android emulator
+$ANDROID_HOME/emulator/emulator -avd Medium_Phone_API_35 -no-snapshot &
+
+# 3. Wait for emulator and verify connection
+sleep 30 && adb devices
+
+# 4. Create JavaScript bundle (REQUIRED)
+npx react-native bundle --platform android --dev false --entry-file index.ts --bundle-output android/app/src/main/assets/index.android.bundle --assets-dest android/app/src/main/res
+
+# 5. Clean prebuild (if needed after dependency changes)
+npx expo prebuild --platform android --clean
+
+# 6. Build APK
+cd android
+./gradlew assembleDebug
+cd ..
+
+# 7. Install and launch
+adb install -r android/app/build/outputs/apk/debug/app-debug.apk
+adb shell am start -n com.anonymous.ProductivityApp/.MainActivity
+```
+
+**Verified Results (June 2024):**
+- ✅ **APK Size:** 190MB (includes Whisper.rn native libraries)
+- ✅ **Build Time:** ~8 minutes (with NDK already cached)
+- ✅ **APK Location:** `android/app/build/outputs/apk/debug/app-debug.apk`
+- ✅ **App Status:** Successfully deployed and running
+
+**Critical Success Factors:**
+1. **SDKMAN Java 17**: Must run `source ~/.sdkman/bin/sdkman-init.sh` first
+2. **System PATH Priority**: `export PATH=/usr/bin:$PATH` prevents pyenv cmake conflicts
+3. **Whisper.rn v0.4.0-rc.12**: Newer version has required amx.cpp files
+4. **Remove expo-speech-recognition**: From both package.json AND app.json plugins
+5. **Prebuild after changes**: Run `npx expo prebuild --platform android --clean` after dependency changes
+
+#### Building the APK
+
+**Linux/Ubuntu:**
+```bash
+# 1. Set up Java 17 environment
+source ~/.sdkman/bin/sdkman-init.sh
+export ANDROID_HOME=/home/$USER/Android/Sdk
+export PATH=$ANDROID_HOME/platform-tools:$PATH
+
+# 2. Bundle JavaScript (CRITICAL - don't skip!)
+npx react-native bundle --platform android --dev false --entry-file index.ts --bundle-output android/app/src/main/assets/index.android.bundle --assets-dest android/app/src/main/res
+
+# 3. Build the APK
+cd android
+./gradlew assembleDebug
+
+# 4. Install on device/emulator
+adb install -r android/app/build/outputs/apk/debug/app-debug.apk
+```
+
+**macOS:**
 ```bash
 # 1. Set up Java 17 environment
 export JAVA_HOME=/opt/homebrew/Cellar/openjdk@17/17.0.15/libexec/openjdk.jdk/Contents/Home
@@ -441,6 +675,8 @@ Built with:
 - [SQLite](https://www.sqlite.org/)
 - [React Navigation](https://reactnavigation.org/)
 - [React Native Markdown Display](https://github.com/iamacup/react-native-markdown-display)
+- [Whisper.rn](https://github.com/mybigday/whisper.rn) - Offline speech-to-text transcription
+- [Expo AV](https://docs.expo.dev/versions/latest/sdk/av/) - Audio recording and playback
 
 ---
 
